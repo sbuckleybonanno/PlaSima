@@ -6,6 +6,7 @@ var c = document.querySelector('canvas'),
 		particleRadius = 10,
     averageSpeed = 4,
     friction = 0.9,
+    cohesion = 0.0,
     colorChangeSpeed = 0.04,
     backgroundColor = "rgba(0, 0, 0, 0.2)",
     startingColor = {
@@ -79,6 +80,7 @@ Particle.prototype.draw = function () {
     }
     this.selectedColor = [255, 255, 255];
     this.friction = 1.0-friction;
+    this.cohesion = 0.5;
     this.radius = particleRadius;
     this.particleCount = 0;
     this.addParticles = function () {
@@ -116,6 +118,10 @@ Particle.prototype.draw = function () {
     qualities.add(controls, "friction", -0.1, 1.0).name("Viscosity").onChange(function () {
       friction = 1.0 - controls.friction;
     });
+    qualities.add(controls, "cohesion", -10, 10).name("Cohesion").listen().onChange(function () {
+      cohesion = controls.cohesion * 0.1;
+    });
+    controls.cohesion = 0.0;
     qualities.addColor(controls, "selectedColor").name("Color").onFinishChange(function () {
       selectedColor.r = controls.selectedColor[0];
       selectedColor.g = controls.selectedColor[1];
@@ -167,6 +173,23 @@ Particle.prototype.draw = function () {
 
       for (j = 0 ; j < len ; j++) {
         particle2 = particles[j];
+
+        // Cohesion:
+
+        x_coh = particle1.x - particle2.x;
+        y_coh = particle1.y - particle2.y;
+        // normalize
+        if (x_coh !== 0 && y_coh !== 0) {
+          diagonal = Math.sqrt(x_coh*x_coh + y_coh*y_coh);
+          x_coh /= (diagonal*diagonal);
+          // x_coh = 1.0 / (diagonal*diagonal)
+          y_coh /= (diagonal*diagonal);
+          // scale
+          x_coh *= cohesion; // For now I'm saying that every particle possesses equal attraction. The alternative is for attraction to be based on radius, similar to gravity.
+          y_coh *= cohesion;
+          particle1.dx += -x_coh;
+          particle1.dy += -y_coh;
+        }
 
         // Collision detection with other particles:
 
