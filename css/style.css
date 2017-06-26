@@ -1,0 +1,14 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+}
+
+/*#gui {
+  position: absolute;
+}*/
+
+/*canvas {
+    -webkit-filter: url("#turbulence");
+    filter: url("#turbulence");
+}*/
