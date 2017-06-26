@@ -1,3 +1,13 @@
+/* TODO:
+
+  Write README.md
+  Change variable names to make more sense for an electromagnetic simulation
+  Perhaps move to three.js, as the EM equations work in three dimensions
+  Remember to use the gravity points system architecture, with vectors, etc.
+
+*/
+
+
 var c = document.querySelector('canvas'),
     ctx = c.getContext('2d'),
     screenWidth = 0,
@@ -19,6 +29,7 @@ var c = document.querySelector('canvas'),
       g: 255,
       b: 255
     },
+    selectedCharge = 1,
     particles = [];
 
 var mouseDown = false,
@@ -36,10 +47,6 @@ window.requestAnimFrame = (function () {
            };
 })();
 
-// function distance (x1, y1, x2, y2) {
-//     return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
-// }
-
 function Particle (x, y) {
     this.x = x;
     this.y = y;
@@ -56,18 +63,15 @@ function Particle (x, y) {
       b: selectedColor.b
     };
     this.radius = particleRadius;
+    this.charge = selectedCharge;
 }
 
 Particle.prototype.draw = function () {
   // var grd;
   ctx.save();
-  // grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-  // grd.addColorStop(1, 'rgba('+Math.round(this.color.r)+','+Math.round(this.color.g)+','+Math.round(this.color.b)+',1.0)');
-  // grd.addColorStop(0, "rgba(0, 0, 0, 0)");
   ctx.beginPath();
   ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
   ctx.fillStyle = 'rgba('+Math.round(this.color.r)+','+Math.round(this.color.g)+','+Math.round(this.color.b)+',1.0)';
-  // ctx.fillStyle = grd;
   ctx.fill();
   ctx.restore();
 };
@@ -174,7 +178,7 @@ Particle.prototype.draw = function () {
       for (j = 0 ; j < len ; j++) {
         particle2 = particles[j];
 
-        // Cohesion:
+        // Electrical force
 
         x_coh = particle1.x - particle2.x;
         y_coh = particle1.y - particle2.y;
@@ -185,33 +189,33 @@ Particle.prototype.draw = function () {
           // x_coh = 1.0 / (diagonal*diagonal)
           y_coh /= (diagonal*diagonal);
           // scale
-          x_coh *= cohesion; // For now I'm saying that every particle possesses equal attraction. The alternative is for attraction to be based on radius, similar to gravity.
-          y_coh *= cohesion;
+          x_coh *= cohesion * particle1.charge*particle2.charge; // For now I'm saying that every particle possesses equal attraction. The alternative is for attraction to be based on radius, similar to gravity. "cohesion" is for now acting a bit like coulomb's constant
+          y_coh *= cohesion * particle1.charge*particle2.charge;
           particle1.dx += -x_coh;
           particle1.dy += -y_coh;
         }
 
         // Collision detection with other particles:
 
-        min_distance = (particle1.radius + particle2.radius) // * 0.8; // The 0.8 is to reduce the hitbox square to be smaller than the rendered circle image, so that circles that don't visually touch don't reflect off of invisible hitboxes.
-        if (particle1 !== particle2 && Math.abs(particle2.x - particle1.x) < min_distance && Math.abs(particle2.y - particle1.y) < min_distance) {
-          possible_x_bounds = [particle1.x-particle1.radius, particle1.x+particle1.radius, particle2.x-particle2.radius, particle2.x+particle2.radius];
-          min_x = Math.min(...possible_x_bounds);
-          max_x = Math.max(...possible_x_bounds);
-          possible_y_bounds = [particle1.y-particle1.radius, particle1.y+particle1.radius, particle2.y-particle2.radius, particle2.y+particle2.radius];
-          min_y = Math.min(...possible_y_bounds);
-          max_y = Math.max(...possible_y_bounds);
-          overlap = {
-            x: ( (max_x-min_x) / min_distance ) * 0.1,
-            y: ( (max_y-min_y) / min_distance ) * 0.1 // Comment out one of these 0.1's for a cool effect on one (or both) of the axes.
-          };
-          if (particle1.x < particle2.x ) overlap.x = -overlap.x;
-					if (particle1.y < particle2.y ) overlap.y = -overlap.y;
-          particle1.dx += overlap.x;
-          particle1.dy += overlap.y;
+        // min_distance = (particle1.radius + particle2.radius) // * 0.8; // The 0.8 is to reduce the hitbox square to be smaller than the rendered circle image, so that circles that don't visually touch don't reflect off of invisible hitboxes.
+        // if (particle1 !== particle2 && Math.abs(particle2.x - particle1.x) < min_distance && Math.abs(particle2.y - particle1.y) < min_distance) {
+        //   possible_x_bounds = [particle1.x-particle1.radius, particle1.x+particle1.radius, particle2.x-particle2.radius, particle2.x+particle2.radius];
+        //   min_x = Math.min(...possible_x_bounds);
+        //   max_x = Math.max(...possible_x_bounds);
+        //   possible_y_bounds = [particle1.y-particle1.radius, particle1.y+particle1.radius, particle2.y-particle2.radius, particle2.y+particle2.radius];
+        //   min_y = Math.min(...possible_y_bounds);
+        //   max_y = Math.max(...possible_y_bounds);
+        //   overlap = {
+        //     x: ( (max_x-min_x) / min_distance ) * 0.1,
+        //     y: ( (max_y-min_y) / min_distance ) * 0.1 // Comment out one of these 0.1's for a cool effect on one (or both) of the axes.
+        //   };
+        //   if (particle1.x < particle2.x ) overlap.x = -overlap.x;
+				// 	if (particle1.y < particle2.y ) overlap.y = -overlap.y;
+        //   particle1.dx += overlap.x;
+        //   particle1.dy += overlap.y;
 
-          particle1.targetColor = particle2.targetColor;
-        }
+          // particle1.targetColor = particle2.targetColor;
+        // }
       }
 
       particle1.dx *= friction;
